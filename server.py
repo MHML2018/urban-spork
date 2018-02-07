@@ -6,30 +6,34 @@ import numpy as np
 
 from keras.models import model_from_json
 
-
-
 ## Starting code from:
 ## https://gist.github.com/tuxmartin/e7c85f84153ba15576c5
 
+## Lots of help from:
+## https://machinelearningmastery.com/tutorial-first-neural-network-python-keras/
+# and
+## https://machinelearningmastery.com/save-load-keras-deep-learning-models/
 
 
-
-
-bind_ip = '127.0.0.1'
+## Set up TCP Server
+bind_ip = '127.0.0.1' # Use localhost for now - replace with '' for global connections
 bind_port = 5025
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((bind_ip, bind_port))
-server.listen(1)  # max backlog of connections
+server.listen(5)  # max backlog of connections
 
 print('Listening on ', bind_ip, bind_port)
 
+
+## This is the function that does the classification
 def work_function(input_data):
     print("Work function working on work stuff of length %i" % (len(input_data)))
     np_input = np.asmatrix(input_data, dtype = np.float)
     X = np.mean(np_input, 0)
     
-    json_file = open('model.DNN', 'r')
+    # We need to load the nnet into memory in each thread (to make it thread safe)
+    json_file = open('model.nn', 'r')
     loaded_model_json = json_file.read()
     json_file.close()
     loaded_model = model_from_json(loaded_model_json)
@@ -46,6 +50,8 @@ def work_function(input_data):
     print(prediction)
     return prediction
 
+
+## Handle request and pass data to work function
 def handle_client_connection(client_socket):
     print("Listening for data")
     request = client_socket.recv(2097152)
@@ -62,6 +68,8 @@ def handle_client_connection(client_socket):
     
     client_socket.close()
 
+
+## Main loop
 while True:
     client_sock, address = server.accept()
     print('Accepted connection from', address[0], address[1])

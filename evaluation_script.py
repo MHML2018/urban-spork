@@ -6,6 +6,8 @@ X = np.asmatrix([0.49405947, 0.50894321, 0.52537861, 0.50926956, 0.51894845, 0.4
 
 print(X.shape)
 
+## https://machinelearningmastery.com/save-load-keras-deep-learning-models/
+
 # load json and create model
 json_file = open('model.nn', 'r')
 loaded_model_json = json_file.read()

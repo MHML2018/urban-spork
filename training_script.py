@@ -1,4 +1,4 @@
-# Create your first MLP in Keras
+# Create a MLP network in Keras
 from keras.models import Sequential
 from keras.layers import Dense
 import numpy, pickle
