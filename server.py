@@ -1,31 +1,72 @@
 import socket
 import threading
+import json
+import sys
+import numpy as np
+
+from keras.models import model_from_json
+
+
 
 ## Starting code from:
 ## https://gist.github.com/tuxmartin/e7c85f84153ba15576c5
 
+
+
+
+
 bind_ip = '127.0.0.1'
-bind_port = 5006
+bind_port = 5025
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((bind_ip, bind_port))
-server.listen(5)  # max backlog of connections
+server.listen(1)  # max backlog of connections
 
-    print('Listening on ', bind_ip, bind_port)
+print('Listening on ', bind_ip, bind_port)
 
+def work_function(input_data):
+    print("Work function working on work stuff of length %i" % (len(input_data)))
+    np_input = np.asmatrix(input_data, dtype = np.float)
+    X = np.mean(np_input, 0)
+    
+    json_file = open('model.json', 'r')
+    loaded_model_json = json_file.read()
+    json_file.close()
+    loaded_model = model_from_json(loaded_model_json)
+    # load weights into new model
+    loaded_model.load_weights("model.h5")
+    print("Loaded model from disk")
 
-    def handle_client_connection(client_socket):
-        print("Listening for data")
-        request = client_socket.recv(1024)
-        print('Received', request)
-        client_socket.send(b'ACK!')
-        client_socket.close()
+    # evaluate loaded model on test data
+    #loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
+    
+    print("Data Shape:", X.shape)
+    prediction = loaded_model.predict(X)
+    prediction = prediction.flat[0]
+    print(prediction)
+    return prediction
 
-    while True:
-        client_sock, address = server.accept()
-        print('Accepted connection from', address[0], address[1])
-        client_handler = threading.Thread(
-            target=handle_client_connection,
-            args=(client_sock,)  # without comma you'd get a... TypeError: handle_client_connection() argument after * must be a sequence, not _socketobject
-        )
-        client_handler.start()
+def handle_client_connection(client_socket):
+    print("Listening for data")
+    request = client_socket.recv(2097152)
+    print('Received len()', len(request))
+    
+    rx_size = sys.getsizeof(request)
+   
+    request_decode = json.loads(request.decode())
+    
+    work_output = work_function(request_decode)
+    
+    response = "This is my response! I recieved %i bytes. Work output: %f" % (rx_size, work_output)
+    client_socket.send(response.encode())
+    
+    client_socket.close()
+
+while True:
+    client_sock, address = server.accept()
+    print('Accepted connection from', address[0], address[1])
+    client_handler = threading.Thread(
+        target=handle_client_connection,
+        args=(client_sock,)  # without comma you'd get a... TypeError: handle_client_connection() argument after * must be a sequence, not _socketobject
+    )
+    client_handler.start()
