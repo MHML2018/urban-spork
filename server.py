@@ -29,7 +29,7 @@ def work_function(input_data):
     np_input = np.asmatrix(input_data, dtype = np.float)
     X = np.mean(np_input, 0)
     
-    json_file = open('model.json', 'r')
+    json_file = open('model.DNN', 'r')
     loaded_model_json = json_file.read()
     json_file.close()
     loaded_model = model_from_json(loaded_model_json)
